@@ -7,9 +7,9 @@ const { nanoid } = require('nanoid')
 
 /* Get posts */
 router.get('/', function(req, res, next) {
+    let user = req.headers.userdata ? JSON.parse(req.headers.userdata) : null;
     let query = 'SELECT * FROM posts ORDER BY CreatedAt';
-
-    if (req.headers.userdata) {
+    if (user) {
         db.all(query, [], (err, rows) => {
             if (err) {
                 console.log(err.message);
@@ -24,9 +24,12 @@ router.get('/', function(req, res, next) {
 
 /* Add new post */
 router.post('/', function(req, res, next) {
-
+    let user = req.headers.userdata ? JSON.parse(req.headers.userdata) : null;
     let query = 'INSERT INTO posts(Id, Content, ImgUrl, CreatedAt, UpdatedAt) VALUES(?, ?, ?, ?, ?)';
-    if (req.headers.userdata) {
+    
+    console.log(req.body.Content);
+
+    if (user) {
         let createdAt = Date.now();
         let post = {
             Id: nanoid(),
