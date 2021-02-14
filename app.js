@@ -15,6 +15,15 @@ var uploadRouter = require('./routes/upload');
 
 var app = express();
 
+// socket io
+const http = require('http').Server(app);
+const io = require('socket.io')(http, {
+  cors: {
+    origin: "*",
+    credentials: true
+  }
+});
+
 app.use(cors());
 app.use(logger('dev'));
 app.use(express.json());
@@ -39,14 +48,30 @@ app.use(function(err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
   res.status(err.status || 500);
-  // res.render('error');
+});
+
+io.on('connection', (socket) => {
+  console.log('<!> Someone just ask to connect <!>');
+
+  socket.on('like', (post) => {
+    // send to others
+    io.emit('like', post);
+  });
+
+  socket.on('unlike', (post) => {
+    // send to others
+    io.emit('unlike', post);
+  })
+
+});
+
+http.listen(process.env.IO_PORT, () => {
+  console.log(`Server [socket-io] is running on port ${process.env.IO_PORT}`)
 });
 
 app.listen(process.env.PORT, () => {
-    console.log(`Serveur is running on port ${process.env.PORT}`);
+    console.log(`Server [node-js] is running on port ${process.env.PORT}`);
 });
 
 module.exports = app;
