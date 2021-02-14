@@ -13,13 +13,12 @@ router.get('/', function(req, res, next) {
      * il est donc possible de supprimer un like distinct (unlike) avec l'id du like
      */
     let subQuery = 'SELECT Id FROM likes AS subLikes WHERE subLikes.FireBaseId LIKE \'' + user.uid + '\'';
-    let query = 'SELECT posts.Id, Content, ImgUrl, CreatedAt, UpdatedAt, COUNT(likes.PostId) AS likes, ' +
+    let query = 'SELECT posts.Id, Content, ImgUrl, CreatedAt, UpdatedAt, CreatedBy, COUNT(likes.PostId) AS likes, ' +
                 '( ' + subQuery + ' AND subLikes.PostId = posts.Id ) didILikeIt ' +
                 'FROM posts ' +
                 'LEFT JOIN likes ON posts.Id = likes.PostId ' +
                 'GROUP BY posts.Id ' +
                 'ORDER BY CreatedAt';
-
     console.log(query);
 
     if (user) {
@@ -27,8 +26,29 @@ router.get('/', function(req, res, next) {
             if (err) {
                 console.log(err.message);
                 throw err;
+            } else {
+                res.status(200).json(rows);
             }
-            res.status(200).json(rows);
+        });
+    } else {
+        res.status(403).json({ message: 'Not authorized' });
+    }
+});
+
+/* Delete post */
+router.delete('/:id', function(req, res, next) {
+    let user = req.headers.userdata ? JSON.parse(req.headers.userdata) : null;
+    let query = "DELETE FROM posts WHERE Id LIKE '" + req.params.id + "'";
+    console.log(query);
+
+    if (user) {
+        db.run(query, [], (err) => {
+            if (err) {
+                res.status(500).json({ message: err.message });
+            } else {
+                res.status(200).json({ message: 'post has been removed.' });
+                console.log('Post has been removed.');
+            }
         });
     } else {
         res.status(403).json({ message: 'Not authorized' });
@@ -38,9 +58,9 @@ router.get('/', function(req, res, next) {
 /* Add new post */
 router.post('/', function(req, res, next) {
     let user = req.headers.userdata ? JSON.parse(req.headers.userdata) : null;
-    let query = 'INSERT INTO posts(Id, Content, ImgUrl, CreatedAt, UpdatedAt) VALUES(?, ?, ?, ?, ?)';
+    let query = 'INSERT INTO posts(Id, Content, ImgUrl, CreatedAt, UpdatedAt, CreatedBy) VALUES(?, ?, ?, ?, ?, ?)';
     
-    console.log(req.body.Content);
+    console.log(user);
 
     if (user) {
         let createdAt = Date.now();
@@ -49,7 +69,8 @@ router.post('/', function(req, res, next) {
             Content: req.body.Content,
             ImgUrl: req.body.ImgUrl,
             CreatedAt: createdAt,
-            UpdatedAt: createdAt
+            UpdatedAt: createdAt,
+            CreatedBy: user.uid
         };
         
         db.run(query, objectToArray(post), (err) => {

@@ -30,13 +30,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+// routing
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/posts', postsRouter);
 app.use('/likes', likesRouter);
 app.use('/upload', uploadRouter);
 app.use("/public/uploads", express.static(path.join(__dirname, 'public/uploads')));
-
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -54,16 +54,10 @@ app.use(function(err, req, res, next) {
 io.on('connection', (socket) => {
   console.log('<!> Someone just ask to connect <!>');
 
-  socket.on('like', (post) => {
-    // send to others
-    io.emit('like', post);
-  });
-
-  socket.on('unlike', (post) => {
-    // send to others
-    io.emit('unlike', post);
-  })
-
+  socket.on('like', (post) => io.emit('like', post));
+  socket.on('unlike', (post) => io.emit('unlike', post));
+  socket.on('post', (post) => io.emit('post', post));
+  socket.on('post-delete', (post) => io.emit('post-delete', post));
 });
 
 http.listen(process.env.IO_PORT, () => {
