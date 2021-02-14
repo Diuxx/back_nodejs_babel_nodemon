@@ -10,6 +10,7 @@ var db = require('./database/connexion');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var postsRouter = require('./routes/posts');
+var likesRouter = require('./routes/likes');
 var uploadRouter = require('./routes/upload');
 
 var app = express();
@@ -23,6 +24,7 @@ app.use(cookieParser());
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/posts', postsRouter);
+app.use('/likes', likesRouter);
 app.use('/upload', uploadRouter);
 app.use("/public/uploads", express.static(path.join(__dirname, 'public/uploads')));
 

@@ -8,13 +8,27 @@ const { nanoid } = require('nanoid')
 /* Get posts */
 router.get('/', function(req, res, next) {
     let user = req.headers.userdata ? JSON.parse(req.headers.userdata) : null;
-    let query = 'SELECT * FROM posts ORDER BY CreatedAt';
+    /* 
+     * Récupère la liste des posts, compte le nombre de likes et retourne l'id du like selon l'utilisateur qui requete
+     * il est donc possible de supprimer un like distinct (unlike) avec l'id du like
+     */
+    let subQuery = 'SELECT Id FROM likes AS subLikes WHERE subLikes.FireBaseId LIKE \'' + user.uid + '\'';
+    let query = 'SELECT posts.Id, Content, ImgUrl, CreatedAt, UpdatedAt, COUNT(likes.PostId) AS likes, ' +
+                '( ' + subQuery + ' AND subLikes.PostId = posts.Id ) didILikeIt ' +
+                'FROM posts ' +
+                'LEFT JOIN likes ON posts.Id = likes.PostId ' +
+                'GROUP BY posts.Id ' +
+                'ORDER BY CreatedAt';
+
+    console.log(query);
+
     if (user) {
         db.all(query, [], (err, rows) => {
             if (err) {
                 console.log(err.message);
                 throw err;
             }
+            console.log(rows);
             res.status(200).json(rows);
         });
     } else {
